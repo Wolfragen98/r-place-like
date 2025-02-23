@@ -3,42 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dotyková mřížka</title>
+    <title>Canvas s barevnou paletou</title>
     <style>
-        body, html {
+        body {
             margin: 0;
             padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
             overflow: hidden;
         }
 
+        #canvas-container {
+            position: relative;
+        }
+
         #grid-canvas {
-            display: block;
-            background-color: #f0f0f0;
-            margin: auto;
+            border: 1px solid #000;
         }
 
-        .color {
-            width: 40px;
-            height: 40px;
-            margin: 5px;
-            cursor: pointer;
-            border-radius: 50%;
-        }
-
-        .color-palette {
-            position: fixed;
+        #color-palette {
+            position: absolute;
             bottom: 10px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            flex-wrap: wrap;
             justify-content: center;
+            flex-wrap: wrap;
+            width: 80%;
+        }
+
+        #color-palette button {
+            width: 30px;
+            height: 30px;
+            margin: 2px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        #color-palette button:hover {
+            opacity: 0.8;
         }
     </style>
 </head>
 <body>
-    <canvas id="grid-canvas"></canvas>
-    <div class="color-palette" id="color-palette"></div>
+    <div id="canvas-container">
+        <canvas id="grid-canvas"></canvas>
+        <div id="color-palette"></div>
+    </div>
 
     <script>
         const canvas = document.getElementById("grid-canvas");
@@ -56,9 +71,25 @@
 
         // Generování barev pro paletu
         const colors = [
-            "#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#FF00FF", "#00FFFF", "#FFFFFF", "#000000",
-            "#FFC0CB", "#800080", "#808080", "#008000", "#FFA500", "#800000", "#808000", "#ADD8E6",
-            "#D3D3D3", "#A52A2A", "#00008B", "#006400"
+            "#FF0000", "#FF4D4D", "#FF9999", "#FFCCCC", // různé odstíny červené
+            "#00FF00", "#4DFF4D", "#99FF99", "#CCFFCC", // různé odstíny zelené
+            "#0000FF", "#4D4DFF", "#9999FF", "#CCCCFF", // různé odstíny modré
+            "#FFFF00", "#FFFF4D", "#FFFF99", "#FFFFCC", // různé odstíny žluté
+            "#FF00FF", "#FF4DFF", "#FF99FF", "#FFCCFF", // různé odstíny fialové
+            "#00FFFF", "#4DFFFF", "#99FFFF", "#CCFFFF", // různé odstíny tyrkysové
+            "#FFFFFF", "#F0F0F0", "#E0E0E0", "#D0D0D0", // různé odstíny bílé
+            "#000000", "#333333", "#666666", "#999999", // různé odstíny černé
+            "#FFC0CB", "#FF69B4", "#FF1493", "#FF6347", // různé odstíny růžové
+            "#800080", "#8A2BE2", "#6A5ACD", "#483D8B", // různé odstíny fialové
+            "#008000", "#006400", "#228B22", "#32CD32", // různé odstíny zelené
+            "#FFA500", "#FF8C00", "#FF7F50", "#FF6347", // různé odstíny oranžové
+            "#800000", "#8B0000", "#A52A2A", "#D2691E", // různé odstíny červenohnědé
+            "#808000", "#556B2F", "#9ACD32", "#ADFF2F", // různé odstíny olivové
+            "#ADD8E6", "#87CEFA", "#4682B4", "#B0E0E6", // různé odstíny modré
+            "#D3D3D3", "#A9A9A9", "#808080", "#2F4F4F", // různé odstíny šedé
+            "#A52A2A", "#B22222", "#CD5C5C", "#F08080", // různé odstíny hnědé
+            "#00008B", "#0000CD", "#1E90FF", "#4169E1", // různé odstíny modré
+            "#006400", "#228B22", "#32CD32", "#98FB98" // různé odstíny zelené
         ];
 
         // Pole pro uložení stavů pixelů
@@ -123,7 +154,6 @@
             colors.forEach(color => {
                 const button = document.createElement("button");
                 button.style.backgroundColor = color;
-                button.classList.add("color");
                 button.addEventListener("click", () => changeColor(color));
                 colorPalette.appendChild(button);
             });
@@ -173,22 +203,21 @@
         }
 
         // Funkce pro zpracování pravého tlačítka myši a posouvání mřížky
-        function startDrag(event) {
-            if (event.button === 2) { // Pravé tlačítko myši
+        canvas.addEventListener("mousedown", (event) => {
+            if (event.button === 2) {
                 isDragging = true;
                 startX = event.clientX;
                 startY = event.clientY;
-                event.preventDefault(); // Zabraňuje zobrazení kontextového menu
             }
-        }
+        });
 
-        function dragMove(event) {
+        canvas.addEventListener("mousemove", (event) => {
             if (isDragging) {
                 const dx = event.clientX - startX;
                 const dy = event.clientY - startY;
-                
-                offsetX -= dx;
-                offsetY -= dy;
+
+                offsetX += dx;
+                offsetY += dy;
 
                 // Zamezíme posunutí mřížky mimo oblast
                 offsetX = Math.max(0, Math.min(offsetX, canvas.width - cols * pixelSize));
@@ -199,35 +228,21 @@
 
                 renderGrid();
             }
-        }
-
-        function stopDrag(event) {
-            if (event.button === 2) { // Pravé tlačítko myši
-                isDragging = false;
-            }
-        }
-
-        // Přidání event listenerů pro zoomování, posouvání pomocí klávesnice a dragování
-        window.addEventListener('wheel', zoom);
-        window.addEventListener('keydown', moveGrid);
-        canvas.addEventListener('mousedown', startDrag);
-        canvas.addEventListener('mousemove', dragMove);
-        canvas.addEventListener('mouseup', stopDrag);
-        canvas.addEventListener('contextmenu', (event) => event.preventDefault()); // Zabráníme kontextovému menu pravého tlačítka
-
-        // Inicializace stránky
-        window.onload = function() {
-            createColorPalette();
-            renderGrid();
-        };
-
-        // Kliknutí na canvas pro kreslení
-        canvas.addEventListener("click", (event) => {
-            const rect = canvas.getBoundingClientRect();
-            const x = Math.floor((event.clientX - rect.left + offsetX) / pixelSize);
-            const y = Math.floor((event.clientY - rect.top + offsetY) / pixelSize);
-            drawPixel(x, y);
         });
+
+        canvas.addEventListener("mouseup", () => {
+            isDragging = false;
+        });
+
+        // Přidání listeneru pro zoom
+        canvas.addEventListener("wheel", zoom);
+
+        // Přidání listeneru pro posouvání mřížky pomocí klávesnice
+        window.addEventListener("keydown", moveGrid);
+
+        // Inicializace
+        createColorPalette();
+        renderGrid();
     </script>
 </body>
 </html>
